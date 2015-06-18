@@ -7,7 +7,12 @@
 ##############################################################################
 
 # Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
-DEFAULT_JVM_OPTS=""
+# Java 7 Config - LOCAL
+export JAVA_HOME=~/opt/jdk1.7.0_80/
+export PATH=$JAVA_HOME/bin:$PATH
+
+# PROXY Config - LOCAL
+DEFAULT_JVM_OPTS="-DsocksProxyHost=127.0.0.1 -DsocksProxyPort=9150"
 
 APP_NAME="Gradle"
 APP_BASE_NAME=`basename "$0"`
