@@ -78,7 +78,7 @@ public class Bootstrap {
 
 	public Bootstrap(String[] args, String[] contextPath) {
 		try {
-			commandLine = SimpleShellCommandLineOptions.parseCommandLine(args);
+			commandLine = getShellCommandLineOptions().parseCommandLine(args);
 		}
 		catch (IOException e) {
 			throw new ShellException(e.getMessage(), e);
@@ -177,14 +177,27 @@ public class Bootstrap {
 		}
 
 		ctx.close();
-		sw.stop();
-		if (shell.isDevelopmentMode()) {
+	    	if (sw != null) {
+		    // We only need to stop if it exists
+		    sw.stop();
+		    if (shell.isDevelopmentMode()) {
 			System.out.println("Total execution time: " + sw.getLastTaskTimeMillis() + " ms");
+		    }
 		}
 		return exitShellRequest;
 	}
 
 	public JLineShellComponent getJLineShellComponent() {
 		return ctx.getBean("shell", JLineShellComponent.class);
+	}
+
+	/**
+	 * Subclasses may override if needed
+	 * @return ShellCommandLineOptions to create the CommandLine. Default to {@link SimpleShellCommandLineOptions}
+	 * @see ShellCommandLineOptions
+	 * @see CommandLine
+	 */
+    	protected ShellCommandLineOptions getShellCommandLineOptions() {
+	     return new SimpleShellCommandLineOptions();
 	}
 }

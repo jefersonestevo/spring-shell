@@ -31,7 +31,7 @@ import org.springframework.shell.support.logging.HandlerUtils;
  * 
  * @author vnagaraja
  */
-public class SimpleShellCommandLineOptions {
+public class SimpleShellCommandLineOptions implements ShellCommandLineOptions {
 
 	private static final Logger LOGGER = HandlerUtils.getLogger(SimpleShellCommandLineOptions.class);
 	public static final int DEFAULT_HISTORY_SIZE = 3000;
@@ -40,12 +40,10 @@ public class SimpleShellCommandLineOptions {
 	int historySize = DEFAULT_HISTORY_SIZE;
 	boolean disableCommands;
 
-	public static CommandLine parseCommandLine(String[] args)
-			throws IOException {
+	public CommandLine parseCommandLine(String[] args) throws IOException {
 		if (args == null) {
 			args = new String[] {};
 		}
-		SimpleShellCommandLineOptions options = new SimpleShellCommandLineOptions();
 		List<String> commands = new ArrayList<String>();
 		int i = 0;
 		while (i < args.length) {
@@ -53,7 +51,7 @@ public class SimpleShellCommandLineOptions {
 			if (arg.equals("--profiles")) {
 				try {
 					String profiles = args[i++];
-					options.extraSystemProperties.put("spring.profiles.active",	profiles);
+					this.extraSystemProperties.put("spring.profiles.active",	profiles);
 				} catch (ArrayIndexOutOfBoundsException e) {
 					LOGGER.warning("No value specified for --profiles option");
 				}
@@ -73,7 +71,7 @@ public class SimpleShellCommandLineOptions {
 					if (histSize <= 0) {
 						LOGGER.warning("histsize option must be > 0, using default value of " + DEFAULT_HISTORY_SIZE);
 					} else {
-						options.historySize = histSize;
+						this.historySize = histSize;
 					}
 				} catch (NumberFormatException e) {
 					LOGGER.warning("Unable to parse histsize value to an integer ");
@@ -81,7 +79,7 @@ public class SimpleShellCommandLineOptions {
 					LOGGER.warning("No value specified for --histsize option");
 				}
 			} else if (arg.equals("--disableInternalCommands")) { 
-				options.disableCommands = true;
+				this.disableCommands = true;
 			} else if (arg.equals("--help")) {
 				printUsage();
 				System.exit(0);
@@ -108,17 +106,17 @@ public class SimpleShellCommandLineOptions {
 		}
 
 		if (commands.size() > 0) {
-			options.executeThenQuit = commands.toArray(new String[commands.size()]);
+			this.executeThenQuit = commands.toArray(new String[commands.size()]);
 		}
 
-		for (Map.Entry<String, String> entry : options.extraSystemProperties.entrySet()) {
+		for (Map.Entry<String, String> entry : this.extraSystemProperties.entrySet()) {
 			System.setProperty(entry.getKey(), entry.getValue());
 		}
 
-		return new CommandLine(args, options.historySize, options.executeThenQuit, options.disableCommands);
+		return new CommandLine(args, this.historySize, this.executeThenQuit, this.disableCommands);
 	}
 
-	private static void printUsage() {
+	private void printUsage() {
 		System.out.println("Usage:  --help --histsize [size] --cmdfile [file name] --profiles [comma-separated list of profile names]");
 	}
 }
