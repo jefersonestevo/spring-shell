@@ -9,7 +9,7 @@ buildscript {
 }
 
 description = 'Spring Shell'
-group = 'org.springframework.shell'
+group = 'enhanced.spring.shell'
 
 repositories {
   mavenCentral()
