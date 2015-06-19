@@ -12,7 +12,8 @@ export JAVA_HOME=~/opt/jdk1.7.0_80/
 export PATH=$JAVA_HOME/bin:$PATH
 
 # PROXY Config - LOCAL
-DEFAULT_JVM_OPTS="-DsocksProxyHost=127.0.0.1 -DsocksProxyPort=9150"
+# DEFAULT_JVM_OPTS="-DsocksProxyHost=127.0.0.1 -DsocksProxyPort=9150"
+DEFAULT_JVM_OPTS=""
 
 APP_NAME="Gradle"
 APP_BASE_NAME=`basename "$0"`

@@ -25,6 +25,19 @@ apply plugin: 'docbook-reference'
 apply plugin: 'application'
 
 
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "http://10.0.132.103:8081/nexus/content/repositories/releases"){
+                authentication(userName: "admin", password: "tivit123")
+            }
+            snapshotRepository(url: "http://10.0.132.103:8081/nexus/content/repositories/snapshots"){
+                authentication(userName: "admin", password: "tivit123")
+            }
+        }
+    }
+}
+
 configurations.all {
     resolutionStrategy.failOnVersionConflict()
 }
