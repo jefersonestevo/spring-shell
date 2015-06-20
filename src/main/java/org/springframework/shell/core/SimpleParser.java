@@ -32,6 +32,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.shell.core.annotation.CliAvailabilityIndicator;
 import org.springframework.shell.core.annotation.CliCommand;
 import org.springframework.shell.core.annotation.CliOption;
@@ -40,6 +41,7 @@ import org.springframework.shell.support.logging.HandlerUtils;
 import org.springframework.shell.support.util.ExceptionUtils;
 import org.springframework.shell.support.util.NaturalOrderComparator;
 import org.springframework.shell.support.util.OsUtils;
+import org.springframework.shell.utils.AopUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -444,8 +446,8 @@ public class SimpleParser implements Parser {
 		// The reflection could certainly be optimised, but it's good enough for now (and cached reflection
 		// is unlikely to be noticeable to a human being using the CLI)
 		for (final CommandMarker command : commands) {
-			for (final Method method : command.getClass().getMethods()) {
-				CliCommand cmd = method.getAnnotation(CliCommand.class);
+			for (final Method method : AopUtils.getTargetObject(command, command.getClass()).getClass().getMethods()) {
+				CliCommand cmd = AnnotationUtils.findAnnotation(method, CliCommand.class);
 				if (cmd != null) {
 					// We have a @CliCommand.
 					if (checkAvailabilityIndicators) {
@@ -622,7 +624,7 @@ public class SimpleParser implements Parser {
 			MethodTarget methodTarget = targets.iterator().next();
 
 			// Identify the command we're working with
-			CliCommand cmd = methodTarget.getMethod().getAnnotation(CliCommand.class);
+			CliCommand cmd = AnnotationUtils.findAnnotation(methodTarget.getMethod(), CliCommand.class);
 			Assert.notNull(cmd, "CliCommand unavailable for '" + methodTarget.getMethod().toGenericString() + "'");
 
 			// Make a reasonable attempt at parsing the remainingBuffer
@@ -1022,7 +1024,7 @@ public class SimpleParser implements Parser {
 				Annotation[][] parameterAnnotations = methodTarget.getMethod().getParameterAnnotations();
 				if (parameterAnnotations.length > 0) {
 					// Offer specified help
-					CliCommand cmd = methodTarget.getMethod().getAnnotation(CliCommand.class);
+					CliCommand cmd = AnnotationUtils.findAnnotation(methodTarget.getMethod(), CliCommand.class);
 					Assert.notNull(cmd, "CliCommand not found");
 
 					for (String value : cmd.value()) {
@@ -1065,7 +1067,7 @@ public class SimpleParser implements Parser {
 
 			SortedSet<String> result = new TreeSet<String>(COMPARATOR);
 			for (MethodTarget mt : matchingTargets) {
-				CliCommand cmd = mt.getMethod().getAnnotation(CliCommand.class);
+				CliCommand cmd = AnnotationUtils.findAnnotation(mt.getMethod(), CliCommand.class);
 				if (cmd != null) {
 					for (String value : cmd.value()) {
 						if ("".equals(cmd.help())) {
@@ -1094,7 +1096,7 @@ public class SimpleParser implements Parser {
 			for (Object o : commands) {
 				Method[] methods = o.getClass().getMethods();
 				for (Method m : methods) {
-					CliCommand cmd = m.getAnnotation(CliCommand.class);
+					CliCommand cmd = AnnotationUtils.findAnnotation(m, CliCommand.class);
 					if (cmd != null) {
 						result.addAll(Arrays.asList(cmd.value()));
 					}
@@ -1108,7 +1110,8 @@ public class SimpleParser implements Parser {
 		synchronized (mutex) {
 			commands.add(command);
 			for (final Method method : command.getClass().getMethods()) {
-				CliAvailabilityIndicator availability = method.getAnnotation(CliAvailabilityIndicator.class);
+				CliAvailabilityIndicator availability = AnnotationUtils.findAnnotation(method,
+					CliAvailabilityIndicator.class);
 				if (availability != null) {
 					Assert.isTrue(
 							method.getParameterTypes().length == 0,
@@ -1138,7 +1141,8 @@ public class SimpleParser implements Parser {
 		synchronized (mutex) {
 			commands.remove(command);
 			for (Method m : command.getClass().getMethods()) {
-				CliAvailabilityIndicator availability = m.getAnnotation(CliAvailabilityIndicator.class);
+				CliAvailabilityIndicator availability = AnnotationUtils.findAnnotation(m,
+					CliAvailabilityIndicator.class);
 				if (availability != null) {
 					for (String cmd : availability.value()) {
 						availabilityIndicators.remove(cmd);
