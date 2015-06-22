@@ -32,6 +32,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
+import org.springframework.aop.support.AopUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.shell.core.annotation.CliAvailabilityIndicator;
 import org.springframework.shell.core.annotation.CliCommand;
@@ -41,7 +42,6 @@ import org.springframework.shell.support.logging.HandlerUtils;
 import org.springframework.shell.support.util.ExceptionUtils;
 import org.springframework.shell.support.util.NaturalOrderComparator;
 import org.springframework.shell.support.util.OsUtils;
-import org.springframework.shell.utils.AopUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -446,7 +446,7 @@ public class SimpleParser implements Parser {
 		// The reflection could certainly be optimised, but it's good enough for now (and cached reflection
 		// is unlikely to be noticeable to a human being using the CLI)
 		for (final CommandMarker command : commands) {
-			for (final Method method : AopUtils.getTargetObject(command, command.getClass()).getClass().getMethods()) {
+			for (final Method method : AopUtils.getTargetClass(command).getMethods()) {
 				CliCommand cmd = AnnotationUtils.findAnnotation(method, CliCommand.class);
 				if (cmd != null) {
 					// We have a @CliCommand.
