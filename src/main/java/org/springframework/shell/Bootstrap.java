@@ -177,8 +177,8 @@ public class Bootstrap {
 		}
 
 		ctx.close();
-	    	if (sw != null) {
-		    // We only need to stop if it exists
+	    	// We only need to stop if it exists
+	    	if (sw != null && sw.isRunning()) {
 		    sw.stop();
 		    if (shell.isDevelopmentMode()) {
 			System.out.println("Total execution time: " + sw.getLastTaskTimeMillis() + " ms");

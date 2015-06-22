@@ -26,6 +26,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,12 +37,14 @@ import org.hamcrest.Description;
 import org.hamcrest.DiagnosingMatcher;
 import org.hamcrest.Matcher;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import org.springframework.shell.converters.StringConverter;
 import org.springframework.shell.core.annotation.CliCommand;
 import org.springframework.shell.core.annotation.CliOption;
 import org.springframework.shell.event.ParseResult;
+import org.springframework.shell.plugin.HelpFormatter;
 
 /**
  * Tests for parsing and completion logic.
@@ -50,13 +53,22 @@ import org.springframework.shell.event.ParseResult;
  */
 public class SimpleParserTests {
 
-	private SimpleParser parser = new SimpleParser();
+	private SimpleParser parser;
+    	private HelpFormatter helpFormatter;
 
 	private int offset;
 
 	private String buffer;
 
 	private ArrayList<Completion> candidates = new ArrayList<Completion>();
+
+    	@Before
+    	public void init() {
+	    parser = new SimpleParser();
+
+	    helpFormatter = mock(HelpFormatter.class);
+	    parser.setHelpFormatter(helpFormatter);
+	}
 
 	@Test
 	public void testSimpleCommandNameCompletion() {

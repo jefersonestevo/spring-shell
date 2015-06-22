@@ -38,10 +38,10 @@ import org.springframework.shell.core.annotation.CliAvailabilityIndicator;
 import org.springframework.shell.core.annotation.CliCommand;
 import org.springframework.shell.core.annotation.CliOption;
 import org.springframework.shell.event.ParseResult;
+import org.springframework.shell.plugin.HelpFormatter;
 import org.springframework.shell.support.logging.HandlerUtils;
 import org.springframework.shell.support.util.ExceptionUtils;
 import org.springframework.shell.support.util.NaturalOrderComparator;
-import org.springframework.shell.support.util.OsUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -66,6 +66,8 @@ public class SimpleParser implements Parser {
 	private final Set<CommandMarker> commands = new HashSet<CommandMarker>();
 
 	private final Map<String, MethodTarget> availabilityIndicators = new HashMap<String, MethodTarget>();
+
+    	private HelpFormatter helpFormatter;
 
 	/**
 	 * The last buffer when completion was requested.
@@ -887,7 +889,7 @@ public class SimpleParser implements Parser {
 
 							// ROO-389: give inline options given there's multiple choices available and we want to help
 							// the user
-							displayHelp(lastOptionKey, option);
+						    	getHelpFormatter().displayHelpForOption(lastOptionKey, option);
 
 							if (results.size() == 1) {
 								String suggestion = results.iterator().next().getValue().trim();
@@ -927,35 +929,6 @@ public class SimpleParser implements Parser {
 			successiveCompletionRequests = 1;
 		}
 		return Converter.TAB_COMPLETION_COUNT_PREFIX + successiveCompletionRequests;
-	}
-
-	private void displayHelp(String lastOptionKey, CliOption option) {
-		StringBuilder help = new StringBuilder();
-		help.append(OsUtils.LINE_SEPARATOR);
-		help.append(option.mandatory() ? "required --" : "optional --");
-		if ("".equals(option.help())) {
-			help.append(lastOptionKey).append(": ").append("No help available");
-		}
-		else {
-			help.append(lastOptionKey).append(": ").append(option.help());
-		}
-		if (option.specifiedDefaultValue().equals(option.unspecifiedDefaultValue())) {
-			if (option.specifiedDefaultValue().equals("__NULL__")) {
-				help.append("; no default value");
-			}
-			else {
-				help.append("; default: '").append(option.specifiedDefaultValue()).append("'");
-			}
-		}
-		else {
-			if (!"".equals(option.specifiedDefaultValue()) && !"__NULL__".equals(option.specifiedDefaultValue())) {
-				help.append("; default if option present: '").append(option.specifiedDefaultValue()).append("'");
-			}
-			if (!"".equals(option.unspecifiedDefaultValue()) && !"__NULL__".equals(option.unspecifiedDefaultValue())) {
-				help.append("; default if option not present: '").append(option.unspecifiedDefaultValue()).append("'");
-			}
-		}
-		LOGGER.info(help.toString());
 	}
 
 	private void completeForSimpleTypes(Class<?> parameterType, List<Completion> allValues) {
@@ -1004,89 +977,40 @@ public class SimpleParser implements Parser {
 		results.add(new Completion(strBuilder.toString()));
 	}
 
-	public void obtainHelp(
-			@CliOption(key = {"", "command"}, optionContext = "availableCommands", help = "Command name to provide help for")
-			String buffer) {
+	public List<AnnotatedCommand> obtainCommands(
+		@CliOption(key = {"", "command"}, optionContext = "availableCommands", help = "Command name to provide help for")
+		String buffer) {
 		synchronized (mutex) {
+			List<AnnotatedCommand> annotatedCommands = new ArrayList<AnnotatedCommand>();
+
 			if (buffer == null) {
-				buffer = "";
+			    buffer = "";
 			}
 
-			StringBuilder sb = new StringBuilder();
-
-			// Figure out if there's a single command we can offer help for
 			final Collection<MethodTarget> matchingTargets = locateTargets(buffer, false, false);
-			if (matchingTargets.size() == 1) {
-				// Single command help
-				MethodTarget methodTarget = matchingTargets.iterator().next();
 
-				// Argument conversion time
+			for (MethodTarget methodTarget : matchingTargets) {
+				CliCommand cmd = AnnotationUtils.findAnnotation(methodTarget.getMethod(), CliCommand.class);
+			    	Assert.notNull(cmd, "CliCommand not found");
+
+				AnnotatedCommand annotatedCommand = new AnnotatedCommand(cmd);
+
 				Annotation[][] parameterAnnotations = methodTarget.getMethod().getParameterAnnotations();
 				if (parameterAnnotations.length > 0) {
-					// Offer specified help
-					CliCommand cmd = AnnotationUtils.findAnnotation(methodTarget.getMethod(), CliCommand.class);
-					Assert.notNull(cmd, "CliCommand not found");
-
-					for (String value : cmd.value()) {
-						sb.append("Keyword:                   ").append(value).append(OsUtils.LINE_SEPARATOR);
-					}
-
-					sb.append("Description:               ").append(cmd.help()).append(OsUtils.LINE_SEPARATOR);
 
 					for (Annotation[] annotations : parameterAnnotations) {
-						CliOption cliOption = null;
 						for (Annotation a : annotations) {
 							if (a instanceof CliOption) {
-								cliOption = (CliOption) a;
-
-								for (String key : cliOption.key()) {
-									if ("".equals(key)) {
-										key = "** default **";
-									}
-									sb.append(" Keyword:                  ").append(key).append(OsUtils.LINE_SEPARATOR);
-								}
-
-								sb.append("   Help:                   ").append(cliOption.help())
-										.append(OsUtils.LINE_SEPARATOR);
-								sb.append("   Mandatory:              ").append(cliOption.mandatory())
-										.append(OsUtils.LINE_SEPARATOR);
-								sb.append("   Default if specified:   '").append(cliOption.specifiedDefaultValue())
-										.append("'").append(OsUtils.LINE_SEPARATOR);
-								sb.append("   Default if unspecified: '").append(cliOption.unspecifiedDefaultValue())
-										.append("'").append(OsUtils.LINE_SEPARATOR);
-								sb.append(OsUtils.LINE_SEPARATOR);
+							    annotatedCommand.addOption((CliOption)a);
 							}
-
-						}
-						Assert.notNull(cliOption, "CliOption not found for parameter '" + Arrays.toString(annotations)
-								+ "'");
-					}
-				}
-				// Only a single argument, so default to the normal help operation
-			}
-
-			SortedSet<String> result = new TreeSet<String>(COMPARATOR);
-			for (MethodTarget mt : matchingTargets) {
-				CliCommand cmd = AnnotationUtils.findAnnotation(mt.getMethod(), CliCommand.class);
-				if (cmd != null) {
-					for (String value : cmd.value()) {
-						if ("".equals(cmd.help())) {
-							result.add("* " + value);
-						}
-						else {
-							result.add("* " + value + " - " + cmd.help());
 						}
 					}
 				}
+
+			    	annotatedCommands.add(annotatedCommand);
 			}
 
-			for (String s : result) {
-				sb.append(s).append(OsUtils.LINE_SEPARATOR);
-			}
-
-			LOGGER.info(sb.toString());
-			// LOGGER.warning("** Type 'hint' (without the quotes) and hit ENTER for step-by-step guidance **"
-			// + StringUtils.LINE_SEPARATOR);
+			return annotatedCommands;
 		}
 	}
 
@@ -1168,5 +1092,17 @@ public class SimpleParser implements Parser {
 		synchronized (mutex) {
 			return Collections.unmodifiableSet(converters);
 		}
+	}
+
+	public void setHelpFormatter(HelpFormatter helpFormatter) {
+	    synchronized (mutex) {
+		this.helpFormatter = helpFormatter;
+	    }
+	}
+
+	public HelpFormatter getHelpFormatter() {
+	    synchronized (mutex) {
+		return helpFormatter;
+	    }
 	}
 }

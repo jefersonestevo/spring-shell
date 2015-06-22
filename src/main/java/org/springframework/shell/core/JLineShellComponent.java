@@ -26,6 +26,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.shell.CommandLine;
 import org.springframework.shell.plugin.BannerProvider;
+import org.springframework.shell.plugin.HelpFormatter;
 import org.springframework.shell.plugin.HistoryFileNameProvider;
 import org.springframework.shell.plugin.PluginUtils;
 import org.springframework.shell.plugin.PromptProvider;
@@ -40,6 +41,9 @@ public class JLineShellComponent extends JLineShell implements SmartLifecycle, A
 
 	@Autowired
 	private CommandLine commandLine;
+
+    	@Autowired
+    	private ApplicationContext ctx;
 	
 	private volatile boolean running = false;
 	private Thread shellThread;
@@ -57,7 +61,7 @@ public class JLineShellComponent extends JLineShell implements SmartLifecycle, A
 	private ExecutionStrategy executionStrategy = new SimpleExecutionStrategy();
 	private SimpleParser parser = new SimpleParser();
 
-	public SimpleParser getSimpleParser() {
+    	public SimpleParser getSimpleParser() {
 		return parser;
 	}
 
@@ -152,6 +156,7 @@ public class JLineShellComponent extends JLineShell implements SmartLifecycle, A
 		this.welcomeMessage = banner[1];
 		this.version = banner[2];
 		this.productName = banner[3];
+	    	parser.setHelpFormatter(PluginUtils.getHighestPriorityProvider(this.applicationContext,HelpFormatter.class));
 	}
 
 	/**

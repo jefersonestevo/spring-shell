@@ -15,9 +15,12 @@
  */
 package org.springframework.shell.commands;
 
+import java.util.List;
+
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.shell.core.AnnotatedCommand;
 import org.springframework.shell.core.CommandMarker;
 import org.springframework.shell.core.JLineShellComponent;
 import org.springframework.shell.core.SimpleParser;
@@ -44,7 +47,9 @@ public class HelpCommands implements CommandMarker, ApplicationContextAware {
 			String buffer) {
 		JLineShellComponent shell = ctx.getBean("shell", JLineShellComponent.class);
 		SimpleParser parser = shell.getSimpleParser();
-		parser.obtainHelp(buffer);
+
+	    	List<AnnotatedCommand> annotatedCommands = parser.obtainCommands(buffer);
+		parser.getHelpFormatter().displayHelpForCommands(annotatedCommands);
 	}
 
 	@Override
