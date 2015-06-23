@@ -46,4 +46,9 @@ public @interface CliCommand {
 	 * @return a help message for this command (the default is a blank String, which means there is no help)
 	 */
 	String help() default "";
+
+	/**
+	 * @return Show some usages for this command
+	 */
+	String[] usages() default "";
 }
