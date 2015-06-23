@@ -49,9 +49,11 @@ import org.fusesource.jansi.Ansi.Attribute;
 import org.fusesource.jansi.Ansi.Color;
 import org.fusesource.jansi.Ansi.Erase;
 import org.fusesource.jansi.AnsiConsole;
+import org.springframework.shell.event.ParseResult;
 import org.springframework.shell.event.ShellStatus;
 import org.springframework.shell.event.ShellStatus.Status;
 import org.springframework.shell.event.ShellStatusListener;
+import org.springframework.shell.support.exception.ShutdownRookThreadException;
 import org.springframework.shell.support.util.IOUtils;
 import org.springframework.shell.support.util.OsUtils;
 import org.springframework.shell.support.util.VersionUtils;
@@ -86,6 +88,8 @@ public abstract class JLineShell extends AbstractShell implements Shell, Runnabl
 	private static final char ESCAPE = 27;
 
 	private static final String BEL = "\007";
+
+    	public static ParseResult currentCommand;
 
 	// Fields
 	protected ConsoleReader reader;
@@ -155,6 +159,17 @@ public abstract class JLineShell extends AbstractShell implements Shell, Runnabl
 			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 				public void run() {
 					shutdownHookFired = true;
+				    	if (currentCommand != null) {
+						try {
+							Object target = currentCommand.getInstance();
+					    		if (target instanceof ExecutionProcessor) {
+								((ExecutionProcessor)target).afterThrowingInvocation(
+									currentCommand, new ShutdownRookThreadException());
+					    		}
+						} catch (Throwable e) {
+							logger.log(Level.SEVERE, "Error on ShutdownHook", e);
+					    	}
+					}
 				}
 			}, getProductName() + " JLine Shutdown Hook"));
 		}

@@ -44,15 +44,21 @@ public class SimpleExecutionStrategy implements ExecutionStrategy {
 			Assert.isTrue(isReadyForCommands(), "SimpleExecutionStrategy not yet ready for commands");
 			Object target = parseResult.getInstance();
 			if (target instanceof ExecutionProcessor) {
-				ExecutionProcessor processor = ((ExecutionProcessor) target);
-				parseResult = processor.beforeInvocation(parseResult);
-				try {
-					Object result = invoke(parseResult);
-					processor.afterReturningInvocation(parseResult, result);
-					return result;
-				} catch (Throwable th) {
-					processor.afterThrowingInvocation(parseResult, th);
-					return handleThrowable(th);
+			    	try {
+					JLineShell.currentCommand = parseResult;
+					ExecutionProcessor processor = ((ExecutionProcessor)target);
+					parseResult = processor.beforeInvocation(parseResult);
+					try {
+					    	Object result = invoke(parseResult);
+					    	processor.afterReturningInvocation(parseResult, result);
+					    	return result;
+					}
+					catch (Throwable th) {
+					    	processor.afterThrowingInvocation(parseResult, th);
+					    	return handleThrowable(th);
+					}
+				} finally {
+				    	JLineShell.currentCommand = null;
 				}
 			}
 			else {
