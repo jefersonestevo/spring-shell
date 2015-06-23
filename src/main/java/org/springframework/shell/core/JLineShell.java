@@ -168,7 +168,9 @@ public abstract class JLineShell extends AbstractShell implements Shell, Runnabl
 					    		}
 						} catch (Throwable e) {
 							logger.log(Level.SEVERE, "Error on ShutdownHook", e);
-					    	}
+					    	} finally {
+						    	currentCommand = null;
+						}
 					}
 				}
 			}, getProductName() + " JLine Shutdown Hook"));
