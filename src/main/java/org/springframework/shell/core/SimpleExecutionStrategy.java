@@ -43,9 +43,9 @@ public class SimpleExecutionStrategy implements ExecutionStrategy {
 		synchronized (mutex) {
 			Assert.isTrue(isReadyForCommands(), "SimpleExecutionStrategy not yet ready for commands");
 			Object target = parseResult.getInstance();
-			if (target instanceof ExecutionProcessor) {
-			    	try {
-					JLineShell.currentCommand = parseResult;
+			try {
+				JLineShell.currentCommand = parseResult;
+				if (target instanceof ExecutionProcessor) {
 					ExecutionProcessor processor = ((ExecutionProcessor)target);
 					parseResult = processor.beforeInvocation(parseResult);
 					try {
@@ -57,12 +57,12 @@ public class SimpleExecutionStrategy implements ExecutionStrategy {
 					    	processor.afterThrowingInvocation(parseResult, th);
 					    	return handleThrowable(th);
 					}
-				} finally {
-				    	JLineShell.currentCommand = null;
 				}
-			}
-			else {
-				return invoke(parseResult);
+			 	else {
+					return invoke(parseResult);
+				}
+			} finally {
+				JLineShell.currentCommand = null;
 			}
 		}
 	}

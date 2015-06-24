@@ -53,7 +53,6 @@ import org.springframework.shell.event.ParseResult;
 import org.springframework.shell.event.ShellStatus;
 import org.springframework.shell.event.ShellStatus.Status;
 import org.springframework.shell.event.ShellStatusListener;
-import org.springframework.shell.support.exception.ShutdownRookThreadException;
 import org.springframework.shell.support.util.IOUtils;
 import org.springframework.shell.support.util.OsUtils;
 import org.springframework.shell.support.util.VersionUtils;
@@ -162,9 +161,9 @@ public abstract class JLineShell extends AbstractShell implements Shell, Runnabl
 				    	if (currentCommand != null) {
 						try {
 							Object target = currentCommand.getInstance();
-					    		if (target instanceof ExecutionProcessor) {
-								((ExecutionProcessor)target).afterThrowingInvocation(
-									currentCommand, new ShutdownRookThreadException());
+					    		if (target instanceof ShutdownHookListener) {
+								((ShutdownHookListener)target).onShutdownHook(
+									currentCommand);
 					    		}
 						} catch (Throwable e) {
 							logger.log(Level.SEVERE, "Error on ShutdownHook", e);
